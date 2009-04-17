@@ -79,7 +79,7 @@ except ImportError, e:
   SDK_PATH = None
   for sdk_path in paths:
     if os.path.exists(sdk_path):
-      SDK_PATH = sdk_path
+      SDK_PATH = os.path.realpath(sdk_path)
       break
   if SDK_PATH is None:
     # The SDK could not be found in any known location.
@@ -96,6 +96,7 @@ except ImportError, e:
   EXTRA_PATHS = [
       SDK_PATH,
       os.path.join(SDK_PATH, 'lib', 'django'),
+      os.path.join(SDK_PATH, 'lib', 'antlr3'),
       os.path.join(SDK_PATH, 'lib', 'webob'),
       os.path.join(SDK_PATH, 'lib', 'yaml', 'lib'),
   ]
@@ -118,11 +119,10 @@ from django.conf import settings
 
 # Flags made available this module
 appid = None
-appconfig = None
 have_appserver = False
 
 # Hide everything other than the flags above and the install function.
-__all__ = ("appid", "appconfig", "have_appserver",
+__all__ = ("appid", "have_appserver",
            "InstallAppengineHelperForDjango")
 
 
@@ -137,28 +137,28 @@ def LoadAppengineEnvironment():
     This function has no return value, but it sets the following parameters on
     this package:
     - appid: The name of the application as read from the config file.
-    - appconfig: The appserver configuration dictionary for the application, as
-      read from the config file.
     - have_appserver: Boolean parameter which is True if the code is being run
         from within the appserver environment.
   """
-  global appid, appconfig, have_appserver
-
-  # Load the application configuration.
-  try:
-    from google.appengine.tools import dev_appserver
-    appconfig, unused_matcher = dev_appserver.LoadAppConfig(".", {})
-    appid = appconfig.application
-  except ImportError:
-    # Running under the real appserver.
-    appconfig = {}
-    appid = "unknown"
+  global appid, have_appserver
 
   # Detect if we are running under an appserver.
   have_appserver = False
   stub = apiproxy_stub_map.apiproxy.GetStub("datastore_v3")
   if stub:
     have_appserver = True
+  
+  # Load the application configuration.
+  if have_appserver:
+    appid = os.environ.get("APPLICATION_ID", "unknwown")
+  else:
+    try:
+        from google.appengine.tools import dev_appserver
+        appconfig, unused_matcher = dev_appserver.LoadAppConfig(".", {})
+        appid = appconfig.application
+    except ImportError:
+        # Running under the real appserver.
+        appid = "unknown"
   logging.debug("Loading application '%s' %s an appserver" %
                 (appid, have_appserver and "with" or "without"))
 
