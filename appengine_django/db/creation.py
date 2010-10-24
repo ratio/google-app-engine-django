@@ -25,7 +25,8 @@ class DatabaseCreation(BaseDatabaseCreation):
 
   def create_test_db(self, *args, **kw):
     """Destroys the test datastore. A new store will be recreated on demand"""
-    settings.DATABASE_SUPPORTS_TRANSACTIONS = False
+    settings.DATABASE_SUPPORTS_TRANSACTIONS = False # Only needed for Django 1.1, deprecated @ 1.2.*
+    self.connection.settings_dict['SUPPORTS_TRANSACTIONS'] = False
     self.destroy_test_db()
     self.connection.use_test_datastore = True
     self.connection.flush()

@@ -152,7 +152,7 @@ class CommandsTest(unittest.TestCase):
     """Tests the loaddata command."""
     self.assertCommandSucceeds("loaddata")
 
-  def testLoadData(self):
+  def testLoadData2(self):
     """Tests the loaddata command."""
     self.assertCommandSucceeds("loaddata")
 
